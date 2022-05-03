@@ -18,5 +18,12 @@
   "bugs": {
     "url": "https://github.com/minhphonghp2003/course/issues"
   },
-  "homepage": "https://github.com/minhphonghp2003/course#readme"
+  "homepage": "https://github.com/minhphonghp2003/course#readme",
+  "dependencies": {
+    "express": "^4.18.1"
+  },
+  "devDependencies": {
+    "morgan": "^1.10.0",
+    "nodemon": "^2.0.16"
+  }
 }
