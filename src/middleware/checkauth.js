@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken'
 import fs from 'fs'
 
 const checkauth =(req,res,next)=>{
+   
     let token = req.headers['token']
     let pub = fs.readFileSync("jwtRS256.pub")
     
@@ -10,7 +11,6 @@ const checkauth =(req,res,next)=>{
             next(err)
         }
         req.data = payload
-        console.log(req.data);
         next()
     })
 }
