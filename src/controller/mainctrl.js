@@ -44,7 +44,7 @@ const loginView = async (req, res) => {
         }
 
         let priv = fs.readFileSync('jwtRS256.key')
-        jwt.sign({ ID, ROLE }, priv, { expiresIn: '1h', algorithm: 'RS256' }, (err, payload) => {
+        jwt.sign({ ID, ROLE }, priv, { expiresIn: '1d', algorithm: 'RS256' }, (err, payload) => {
             if (err) {
                 res.status(200).json("error")
             }
