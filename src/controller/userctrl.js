@@ -40,16 +40,62 @@ const mycourseView = async (req, res) => {
 
 }
 
-const u_detailView = async(req, res) => {
-    try { 
+const u_detailView = async (req, res) => {
+    try {
         let id = req.params.id
-        
-        let [rows] = await pool.query("select * from user join auth on user.id = auth.id where user.id = ? ",[id])
-      
+
+        let [rows] = await pool.query("select * from user join auth on user.id = auth.id where user.id = ? ", [id])
+
         res.status(200).json(rows[0])
     } catch (error) {
         res.status(200).json(error)
     }
 }
 
-export default { profileView, enrolledView, mycourseView, u_detailView }
+const updateProfile = async (req, res) => {
+    try {
+        let { ID } = req.data
+        let { f_name, l_name, phone, email, address } = req.body
+        let full_name = f_name + ' ' + l_name
+
+
+        await pool.execute("UPDATE user SET first_name = ?, last_name = ?,phone = ?,email = ?,address = ?,full_name = ? WHERE id = ?;", [f_name, l_name, phone, email, address, full_name, ID])
+        res.status(200).json("DONE")
+    } catch (error) {
+        res.status(400).json(error)
+    }
+}
+
+const updateVallet = async (req, res) => {
+    try {
+        let { ID } = req.data
+        let { action, amount } = req.body
+        if (action === 'deposit') {
+            await pool.execute("UPDATE vallet SET balance = balance + ? WHERE user_id = ?", [amount, ID])
+            res.status(200).json("DONE")
+        } else {
+            let { course_id, user_id } = req.body
+            if (action === 'buy') {
+                let [rows] = await pool.execute("select mentor from course where id = ?", [course_id])
+                let mentor = rows[0].mentor
+                await pool.execute("UPDATE vallet SET balance = balance - ? WHERE user_id = ?", [amount, ID])
+                await pool.execute("UPDATE vallet SET balance = balance + ? WHERE user_id = ?", [amount, mentor])
+            }
+
+            if (action === 'giveaway') {
+                let [rows] = await pool.execute("select id from user where id = ?", [user_id])
+                let user = rows[0].id
+                await pool.execute("UPDATE vallet SET balance = balance - ? WHERE user_id = ?", [amount, ID])
+                await pool.execute("UPDATE vallet SET balance = balance + ? WHERE user_id = ?", [amount, user])
+            }
+
+            res.status(200).json("DONE")
+        }
+
+    } catch (error) {
+        res.status(400).json(error)
+    }
+
+}
+
+export default { profileView, enrolledView, mycourseView, u_detailView, updateProfile, updateVallet }

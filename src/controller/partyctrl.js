@@ -23,4 +23,23 @@ const p_detailView = async (req, res) => {
     }
 }
 
-export default { partyView, p_detailView }
+const joinParty = async (req,res)=>{
+    try {
+        let {ID} = req.data
+        let p_id = req.params.id
+        let [rows] = await pool.execute("select mem_num, max from party where id =?",[p_id])
+        // console.log(rows[0]);
+        let {mem_num , max} = rows[0]
+        if(mem_num === max){
+            return res.status(400).json("Party is full")
+        }
+        await pool.execute("insert into party_join (party,member) values (?,?) ",[p_id,ID])
+        await pool.execute("update party set mem_num = mem_num + 1")
+       
+        res.status(400).json(p_id)
+    } catch (error) {
+        res.status(400).json(error)
+    }
+}
+
+export default { partyView, p_detailView, joinParty }
