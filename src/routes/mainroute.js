@@ -48,7 +48,8 @@ const userroute = (app)=>{
     route.get("/u_detail/:id",userctrl.u_detailView)
     route.get("/enrolled",checkauth,userctrl.enrolledView)
     route.get("/mycourse",checkauth,userctrl.mycourseView)
-
+    route.post("/update",checkauth,userctrl.updateProfile)
+    route.post("/vallet",checkauth,userctrl.updateVallet)
 
     return app.use("/user",cor({origin:'*'}),route)
 }
@@ -63,6 +64,7 @@ const courseroute =(app)=>{
 
 const partyroute =(app)=>{
     route.get("/p_detail/:id",partyctrl.p_detailView)
+    route.post("/join/:id",checkauth,partyctrl.joinParty)
 
     return app.use("/party",cor({origin:'*'}),route)
 }
