@@ -1,7 +1,7 @@
 import { pool } from '../model/auth.js'
 
 const courseView = async (req, res) => {
-    let [rows] = await pool.execute("select * from course")
+    let [rows] = await pool.execute("select * from course ORDER BY date_added DESC")
     res.status(200).json(rows)
 }
 

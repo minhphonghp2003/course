@@ -13,7 +13,7 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     
-    cb(null, file.fieldname + '-' + file.originalname + '-' + Math.round(Math.random() * 10000000))
+    cb(null, file.fieldname+ '-' + Math.round(Math.random() * 10000000) + '-' + file.originalname  )
   }
 })
 
@@ -48,7 +48,7 @@ const userroute = (app)=>{
     route.get("/u_detail/:id",userctrl.u_detailView)
     route.get("/enrolled",checkauth,userctrl.enrolledView)
     route.get("/mycourse",checkauth,userctrl.mycourseView)
-    route.post("/update",checkauth,userctrl.updateProfile)
+    route.post("/update",checkauth,upload.single('single'),userctrl.updateProfile)
     route.post("/vallet",checkauth,userctrl.updateVallet)
 
     return app.use("/user",cor({origin:'*'}),route)
@@ -65,6 +65,9 @@ const courseroute =(app)=>{
 const partyroute =(app)=>{
     route.get("/p_detail/:id",partyctrl.p_detailView)
     route.post("/join/:id",checkauth,partyctrl.joinParty)
+    route.post("/leave/:id",checkauth,partyctrl.leaveParty)
+    route.post("/create",checkauth,partyctrl.createParty)
+    route.post("/modify/:id",checkauth,partyctrl.updateParty)
 
     return app.use("/party",cor({origin:'*'}),route)
 }

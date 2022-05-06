@@ -48,8 +48,7 @@ const loginView = async (req, res) => {
             if (err) {
                 res.status(200).json("error")
             }
-            // change here---------------------------------------------------------
-            // res.cookie("token", payload, { maxAge: 30000 })
+            
             return res.status(200).json(payload)
         })
 
@@ -67,7 +66,7 @@ const regView = async (req, res) => {
         let [rows] = await pool.execute("select * from auth where username = ?", [username])
         let { ID, ROLE } = rows[0]
         let full_name = fname + " " + lname
-        let image = fs.readFileSync('avt.png')
+        let image = 'src/media/avt.png'
         await pool.execute("INSERT INTO user (id, first_name,last_name,full_name,image) VALUES (?,?,?,?,?)", [ID, fname, lname, full_name, image])
         // ----------------------------------------------------------------
 
