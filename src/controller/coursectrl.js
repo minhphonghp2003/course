@@ -1,7 +1,12 @@
 import { pool } from '../model/auth.js'
+import fs from 'fs'
 
 const courseView = async (req, res) => {
     let [rows] = await pool.execute("select * from course ORDER BY date_added DESC")
+    for (const r of rows) {
+        let img = fs.readFileSync(r.POSTER)
+        r.POSTER = img
+    }
     res.status(200).json(rows)
 }
 
@@ -13,28 +18,100 @@ const cateView = async (req, res) => {
 const catedetailView = async (req, res) => {
     try {
         let cate = req.params.cate
-        // console.log(typeof(id), id);
-        let [rows] = await pool.execute("select name as course_name,c.cate as cate_name,course.id as course_id,difficulty,price from course JOIN category as c ON course.CATE = c.ID where c.CATE=?", [cate])
+        let [rows] = await pool.execute("select name as course_name,c.cate as cate_name,course.id as course_id,difficulty,price from course JOIN category as c ON course.CATE = c.CATE where c.CATE=?", [cate])
         res.status(200).json(rows)
     } catch (error) {
-        res.status(400).json({error:"ERROR"})
+        res.status(400).json({ error: "ERROR" })
     }
 
 }
 
 const coursedetailView = async (req, res) => {
     try {
+        
         let id = req.params.id
         var [rows] = await pool.execute("select * from course where id =?", [id])
         let course = rows[0]
-        var [rows] = await pool.execute("select CATE from category where id =?",[course.CATE])
-        let cate = rows[0]
-        let data = {...course,...cate}
+        let {MENTOR} = rows[0]
+        var [rows] = await pool.execute("select full_name from user where id = ?",[MENTOR])
+        course.MENTOR = rows[0].full_name
+        var [rows] = await pool.execute("select learner from enrolled where course = ?",[id])
+        let learner = rows  
+
+        course.POSTER = fs.readFileSync(course.POSTER)
+        let data = {...course,...learner}
         res.status(200).json(data)
     } catch (error) {
-        res.status(400).json({error:"ERROR"})
+        res.status(400).json({ error: "ERROR" })
     }
 
 }
 
-export default { courseView, cateView, catedetailView, coursedetailView }
+const courseAdd = async (req, res) => {
+    try {
+        let { name, desc, diff, time, price, cate } = req.body
+        let img = req.file.destination + req.file.filename
+        let { ID, ROLE } = req.data
+        if (ROLE !== 'mentor') {
+            return res.status(400).json({ error: "You're not a mentor" })
+        }
+        await pool.execute("insert into course (name,descrp,difficulty,time,mentor,price,cate,poster) values (?,?,?,?,?,?,?,?)", [name, desc, diff, time, ID, price, cate, img])
+        let [rows] = await pool.execute("select * from course where name =?", [name])
+        res.status(200).json(rows[0])
+    } catch (error) {
+
+        res.status(400).json(error)
+    }
+}
+
+const courseUpdate = async (req, res) => {
+    try {
+        let { ID } = req.data
+        let {c_id} = req.body
+        let [rows] = await pool.execute("select mentor from course where id =?", [c_id])
+        let mentor = rows[0].mentor
+      
+        if (ID !== mentor) {
+            return res.status(400).json("You're not the course's owner")
+        }
+        let { name, desc, diff, time, price, cate } = req.body
+        let img = req.file.destination + req.file.filename
+        await pool.execute("update course set name=?, descrp=?,difficulty=?,time=?,mentor=?,price=?,cate=?,poster=? where id =?", [name, desc, diff, time, mentor, price, cate, img, c_id])
+
+        return res.status(200).json("DONE")
+    } catch (error) {
+
+        return res.status(400).json({ error: "Error" })
+    }
+}
+
+const courseDelete = async (req, res) => {
+    try {
+        let { ID } = req.data
+        let {c_id} = req.body
+        let [rows] = await pool.execute("select mentor from course where id =?", [c_id])
+        let mentor = rows[0].mentor
+        if (ID !== mentor) {
+            return res.status(400).json("You're not the course's owner")
+        }
+        await pool.execute("delete from course where id = ?", [c_id])
+        res.status(200).json("DONE")
+    } catch (error) {
+        res.status(400).json(error)
+    }
+}
+
+const courseRate = async (req, res) => {
+    try {
+        let { rate, c_name } = req.body
+        let [rows] = await pool.execute("select rate from course where name = ?", [c_name])
+        let cur_rate = (parseFloat(rows[0].rate) + parseFloat(rate)) / 2.0
+
+
+        await pool.execute("update course set rate = ? where name = ?", [cur_rate, c_name])
+        res.status(200).json("DONE")
+    } catch (err) {
+        res.status(400).json(err)
+    }
+}
+export default { courseView, cateView, catedetailView, coursedetailView, courseAdd, courseUpdate, courseDelete, courseRate }

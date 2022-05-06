@@ -9,11 +9,12 @@ import multer from "multer";
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'src/media/')
+    let folder = file.fieldname +'/'
+    cb(null, 'src/media/' +folder)
   },
   filename: function (req, file, cb) {
     
-    cb(null, file.fieldname+ '-' + Math.round(Math.random() * 10000000) + '-' + file.originalname  )
+    cb(null, Math.round(Math.random() * 10000000) + '-' + file.originalname  )
   }
 })
 
@@ -48,9 +49,9 @@ const userroute = (app)=>{
     route.get("/u_detail/:id",userctrl.u_detailView)
     route.get("/enrolled",checkauth,userctrl.enrolledView)
     route.get("/mycourse",checkauth,userctrl.mycourseView)
-    route.post("/update",checkauth,upload.single('single'),userctrl.updateProfile)
+    route.post("/u_update",checkauth,upload.single('profile'),userctrl.updateProfile)
     route.post("/vallet",checkauth,userctrl.updateVallet)
-
+    route.post("/enroll",checkauth,userctrl.enrollCourse)
     return app.use("/user",cor({origin:'*'}),route)
 }
 
@@ -58,6 +59,10 @@ const courseroute =(app)=>{
     route.get("/cate",coursectrl.cateView)
     route.get("/cate/:cate" , coursectrl.catedetailView)
     route.get("/c_detail/:id",coursectrl.coursedetailView)
+    route.post("/new",checkauth,upload.single('course'),coursectrl.courseAdd)
+    route.post("/c_update",checkauth,upload.single('course'),coursectrl.courseUpdate)
+    route.post("/c_delete",checkauth,coursectrl.courseDelete)
+    route.post("/rate/",checkauth,coursectrl.courseRate)
 
     return app.use("/course",cor({origin:'*'}),route)
 }

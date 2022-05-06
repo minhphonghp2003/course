@@ -7,10 +7,10 @@ const profileView = async (req, res) => {
         var [rows] = await pool.execute('select * from user JOIN vallet on user.id = vallet.user_id where id = ?', [ID])
         let info = rows[0]
         var [rows] = await pool.execute('select NAME as PARTY,DATE_JOINED, party.id as P_ID from user LEFT JOIN party_join ON user.id = party_join.member JOIN party ON party_join.PARTY = party.ID where user.id = ? ', [ID])
-        
+
         let img = fs.readFileSync(info.IMAGE)
 
-        let data = {"ROLE":ROLE,...info, ...rows, "IMAGE": img }
+        let data = { "ROLE": ROLE, ...info, ...rows, "IMAGE": img }
         res.status(200).json(data)
     } catch (error) {
         console.log(error);
@@ -30,12 +30,34 @@ const enrolledView = async (req, res) => {
     }
 }
 
+const enrollCourse = async (req, res) => {
+    try {
+        let { ID } = req.data
+        let { c_id } = req.body
+        await pool.execute("insert into enrolled (learner,course) values(?,?)", [ID, c_id])
+        var [rows] = await pool.execute("select price,mentor from course where id = ?", [c_id])
+        let { price, mentor } = rows[0]
+        var [rows] = await pool.execute("select * from vallet where user_id = ? ", [ID])
+        let [learner_bal] = rows
+        if (learner_bal.BALANCE < price) {
+            await pool.execute("delete from enrolled where learner = ?", [ID])
+            return res.status(400).json("Not enough money")
+        }
+        await pool.execute("update vallet set balance = balance - ? where user_id = ? ", [price, ID])
+        await pool.execute("update vallet set balance = balance + ? where user_id = ? ", [price, mentor])
+        res.status(200).json("DONE")
+    } catch (error) {
+        console.log("Error occured: ", error);
+    }
+}
+
 const mycourseView = async (req, res) => {
     try {
         let { ID } = req.data
-        let [rows] = await pool.execute("select id,name,date_added,cate from course where mentor = ?", [ID])
+        let [rows] = await pool.execute("select * from course where mentor = ?", [ID])
         res.status(200).json(rows)
     } catch (error) {
+
         console.log(error);
     }
 
@@ -49,6 +71,7 @@ const u_detailView = async (req, res) => {
         let img = fs.readFileSync(rows[0].IMAGE)
 
         let data = { ...rows[0], "IMAGE": img }
+        delete data.PASSWD
         res.status(200).json(data)
     } catch (error) {
         res.status(200).json(error)
@@ -58,38 +81,43 @@ const u_detailView = async (req, res) => {
 const updateProfile = async (req, res) => {
     try {
         let { ID } = req.data
-        let img = req.file.destination + req.file.filename 
+        let img = req.file.destination + req.file.filename
 
-       
         let { f_name, l_name, phone, email, address } = req.body
         let full_name = f_name + ' ' + l_name
-
 
         await pool.execute("UPDATE user SET first_name = ?, last_name = ?,phone = ?,email = ?,address = ?,full_name = ?,image =? WHERE id = ?;", [f_name, l_name, phone, email, address, full_name, img, ID])
         res.status(200).json("DONE")
     } catch (error) {
-        res.status(400).json({error:error})
+        res.status(400).json({ error: error })
     }
 }
 
 const updateVallet = async (req, res) => {
+    let { ID } = req.data
+    let { action, amount, user_id } = req.body
     try {
-        let { ID } = req.data
-        let { action, amount } = req.body
+
         if (action === 'deposit') {
             await pool.execute("UPDATE vallet SET balance = balance + ? WHERE user_id = ?", [amount, ID])
-            res.status(200).json("DONE")
+            return res.status(200).json("DONE")
         }
-        let { user_id } = req.body
+
 
         if (action === 'giveaway') {
-            let [rows] = await pool.execute("select id from user where id = ?", [user_id])
-            let user = rows[0].id
+
+            let [rows] = await pool.execute("select id, balance from user  JOIN vallet ON user.id = vallet.user_id where id = ? UNION ALL select id,balance from user JOIN vallet ON user.id = vallet.user_id where user.id = ?", [user_id, ID])
+            
+            let beneficiary = rows[0].id
+            let sender_bal = rows[1].balance
+            if (sender_bal < amount) {
+                return res.status(400).json("NOT ENOUGH MONEY")
+            }
             await pool.execute("UPDATE vallet SET balance = balance - ? WHERE user_id = ?", [amount, ID])
-            await pool.execute("UPDATE vallet SET balance = balance + ? WHERE user_id = ?", [amount, user])
+            await pool.execute("UPDATE vallet SET balance = balance + ? WHERE user_id = ?", [amount, beneficiary])
+            return res.status(200).json("DONE")
         }
 
-        res.status(200).json("DONE")
     }
 
     catch (error) {
@@ -98,4 +126,4 @@ const updateVallet = async (req, res) => {
 
 }
 
-export default { profileView, enrolledView, mycourseView, u_detailView, updateProfile, updateVallet }
+export default { profileView, enrolledView, mycourseView, u_detailView, updateProfile, updateVallet, enrollCourse }

@@ -13,11 +13,12 @@ const mainView = async (req, res) => {
         let pub = fs.readFileSync('jwtRS256.pub')
         jwt.verify(token, pub, { algorithm: 'RSA256' }, async (err, payload) => {
             if (err) {
-                return res.status(200).json("Please login again or logout.")
+                return res.status(400).json("Please login again or logout.")
             }
-            let [rows] = await pool.execute('select * from user where id = ?', [payload.ID])
+            let [rows] = await pool.execute('select * from user JOIN vallet where user.id = ?', [payload.ID])
 
-            let info = Object.assign(rows[0], { ROLE: payload.ROLE })
+            // let info = Object.assign(rows[0], { ROLE: payload.ROLE })
+            let info = {...rows[0],...{"ROLE":payload.ROLE}}
             return res.status(200).json(info)
         })
     } else {
@@ -68,6 +69,7 @@ const regView = async (req, res) => {
         let full_name = fname + " " + lname
         let image = 'src/media/avt.png'
         await pool.execute("INSERT INTO user (id, first_name,last_name,full_name,image) VALUES (?,?,?,?,?)", [ID, fname, lname, full_name, image])
+        await pool.execute("insert into vallet (user_id,balance) values (?,?)",[ID,0])
         // ----------------------------------------------------------------
 
         let priv = fs.readFileSync('jwtRS256.key')
