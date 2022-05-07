@@ -34,12 +34,12 @@ const coursedetailView = async (req, res) => {
         let course = rows[0]
         let {MENTOR} = rows[0]
         var [rows] = await pool.execute("select full_name from user where id = ?",[MENTOR])
-        course.MENTOR = rows[0].full_name
+        let m_name = rows[0].full_name
         var [rows] = await pool.execute("select learner from enrolled where course = ?",[id])
         let learner = rows  
 
         course.POSTER = fs.readFileSync(course.POSTER)
-        let data = {...course,...learner}
+        let data = {...course,...{M_NAME:m_name},...learner}
         res.status(200).json(data)
     } catch (error) {
         res.status(400).json({ error: "ERROR" })
@@ -50,17 +50,18 @@ const coursedetailView = async (req, res) => {
 const courseAdd = async (req, res) => {
     try {
         let { name, desc, diff, time, price, cate } = req.body
-        let img = req.file.destination + req.file.filename
         let { ID, ROLE } = req.data
+      
         if (ROLE !== 'mentor') {
             return res.status(400).json({ error: "You're not a mentor" })
         }
+        let img = req.file.destination + req.file.filename
         await pool.execute("insert into course (name,descrp,difficulty,time,mentor,price,cate,poster) values (?,?,?,?,?,?,?,?)", [name, desc, diff, time, ID, price, cate, img])
         let [rows] = await pool.execute("select * from course where name =?", [name])
         res.status(200).json(rows[0])
     } catch (error) {
 
-        res.status(400).json(error)
+        res.status(500).json({error:error})
     }
 }
 

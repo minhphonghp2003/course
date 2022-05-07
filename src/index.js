@@ -2,7 +2,7 @@ import express from "express";
 import morgan from "morgan";
 import 'dotenv/config'
 import route from './routes/mainroute.js'
-import cookieParser from "cookie-parser";
+// import cookieParser from "cookie-parser";
 
 
 // ---------------------------------------------------------
@@ -13,7 +13,7 @@ const port = process.env.PORT
 app.use(morgan('combined'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-app.use(cookieParser())
+
 
 
 
@@ -25,7 +25,7 @@ route.partyroute(app)
 
 app.use((err, req, res, next) => {
   console.error(err.stack)
-  res.status(500).json({error:err})
+  res.status(401).json({error:err})
 })
 // ---------------------------------------------------------
 app.listen(port, () => {

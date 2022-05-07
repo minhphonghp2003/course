@@ -13,11 +13,10 @@ const mainView = async (req, res) => {
         let pub = fs.readFileSync('jwtRS256.pub')
         jwt.verify(token, pub, { algorithm: 'RSA256' }, async (err, payload) => {
             if (err) {
-                return res.status(400).json("Please login again or logout.")
+                return res.status(400).json({ error:"Please login again or logout."})
             }
             let [rows] = await pool.execute('select * from user JOIN vallet where user.id = ?', [payload.ID])
 
-            // let info = Object.assign(rows[0], { ROLE: payload.ROLE })
             let info = {...rows[0],...{"ROLE":payload.ROLE}}
             return res.status(200).json(info)
         })
@@ -47,7 +46,7 @@ const loginView = async (req, res) => {
         let priv = fs.readFileSync('jwtRS256.key')
         jwt.sign({ ID, ROLE }, priv, { expiresIn: '1d', algorithm: 'RS256' }, (err, payload) => {
             if (err) {
-                res.status(200).json("error")
+                return res.status(500).json({error:"error"})
             }
             
             return res.status(200).json(payload)
@@ -55,7 +54,7 @@ const loginView = async (req, res) => {
 
     } catch (error) {
 
-        res.status(400).json({ error: "Invalid account" })
+        return res.status(400).json({ error: "Invalid account" })
     }
 
 }
@@ -75,16 +74,16 @@ const regView = async (req, res) => {
         let priv = fs.readFileSync('jwtRS256.key')
         jwt.sign({ ID, ROLE }, priv, { expiresIn: '1d', algorithm: 'RS256' }, (err, payload) => {
             if (err) {
-                res.status(200).json("err")
+                return res.status(500).json("err")
             }
             // change here---------------------------------------------------------
-            res.cookie("token", payload, { maxAge: 30000 })
-            res.status(200).json(payload)
+           
+             return res.status(200).json(payload)
         })
 
     } catch (err) {
 
-        return res.status(200).json("Invalid username")
+        return res.status(400).json("Invalid username")
     }
 }
 
@@ -92,13 +91,13 @@ const uploadView = (req, res) => {
     try {
         if (req.file) {
 
-            res.status(200).json(req.file)
+            return res.status(200).json(req.file)
         } else {
 
-            res.status(200).json(req.files)
+            return res.status(200).json(req.files)
         }
     } catch (error) {
-        res.status(200).json(error)
+        res.status(500).json(error)
     }
 
 }

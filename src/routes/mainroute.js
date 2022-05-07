@@ -52,6 +52,8 @@ const userroute = (app)=>{
     route.post("/u_update",checkauth,upload.single('profile'),userctrl.updateProfile)
     route.post("/vallet",checkauth,userctrl.updateVallet)
     route.post("/enroll",checkauth,userctrl.enrollCourse)
+    route.get("/myvallet",checkauth,userctrl.myvalletView)
+
     return app.use("/user",cor({origin:'*'}),route)
 }
 
