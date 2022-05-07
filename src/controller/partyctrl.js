@@ -23,7 +23,7 @@ const p_detailView = async (req, res) => {
 
         let info = { ...party_info, ...party_mem }
 
-        res.status(200).json(info)
+        return res.status(200).json(info)
     } catch (error) {
         res.status(200).json(error)
     }
@@ -43,7 +43,7 @@ const joinParty = async (req, res) => {
         await pool.execute("insert into party_join (party,member) values (?,?) ", [p_id, ID])
         await pool.execute("update party set mem_num =(select count(member) from party_join where party = ?) where id =?", [p_id, p_id])
 
-        res.status(200).json("DONE")
+        return res.status(200).json("DONE")
     } catch (error) {
         res.status(400).json("You have joined the party")
     }
