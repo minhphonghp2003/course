@@ -1,13 +1,11 @@
-import { pool } from '../model/auth.js'
+import { pool, paginate } from '../model/model.js'
 import fs from 'fs'
 
 const courseView = async (req, res) => {
-    let [rows] = await pool.execute("select * from course ORDER BY date_added DESC")
-    for (const r of rows) {
-        let img = fs.readFileSync(r.POSTER)
-        r.POSTER = img
-    }
-    return res.status(200).json(rows)
+    let page = parseInt(req.query.page)
+    let page_element =await paginate("course",page,4)
+    return res.json(page_element)
+    
 }
 
 const cateView = async (req, res) => {

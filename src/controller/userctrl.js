@@ -1,4 +1,4 @@
-import { pool } from '../model/auth.js'
+import { pool } from '../model/model.js'
 import fs from 'fs'
 import bcrypt from 'bcrypt'
 
