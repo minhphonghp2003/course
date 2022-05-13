@@ -65,6 +65,8 @@ const courseroute =(app)=>{
     route.post("/c_update",checkauth,upload.single('course'),coursectrl.courseUpdate)
     route.post("/c_delete",checkauth,coursectrl.courseDelete)
     route.post("/rate/",checkauth,coursectrl.courseRate)
+    route.post("/review",checkauth, coursectrl.reviewAdd)
+    route.delete('/review/delete', checkauth,coursectrl.reviewDel)
 
     return app.use("/course",cor({origin:'*'}),route)
 }

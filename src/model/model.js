@@ -9,12 +9,12 @@ const pool = mysql2.createPool({
 
 });
 
-const paginate = async (models,page, size) => {
+const paginate = async (models, page, size) => {
   let page_data = {}
- 
+
   let [data] = await pool.execute(`select * from ${models} order by date_added desc`)
   // ---------------first element of this page
-  if (page <= 0 || !data[size*(page-1)]) {
+  if (page <= 0 || !data[size * (page - 1)]) {
     return { error: "No data " }
   }
   if (page > 1) {
@@ -26,11 +26,25 @@ const paginate = async (models,page, size) => {
   }
   let pageele = data.slice((page - 1) * size, page * size)
   for (const r of pageele) {
-          let img = fs.readFileSync(r.POSTER)
-          r.POSTER = img
-      }
+    let img = fs.readFileSync(r.POSTER)
+    r.POSTER = img
+  }
   page_data.element = pageele
   return page_data
 }
 
-export { pool, paginate }
+const getReview = async (id)=>{
+  let [reviews]= await pool.execute("select * from review where id = ?",[id])
+  return reviews[0]
+}
+
+const addReview = async (user, course, content) => {
+  await pool.execute("insert into review (user,course,content) values (?,?,?)", [user, course, content])
+
+}
+
+const delReview = async (review) => {
+  await pool.execute("delete from review where id = ?", [review])
+}
+
+export { pool, paginate, addReview, delReview, getReview }
