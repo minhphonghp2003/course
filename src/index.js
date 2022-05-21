@@ -1,5 +1,5 @@
 import express from "express";
-import morgan from "morgan";
+// import morgan from "morgan";
 import 'dotenv/config'
 import cor from 'cors'
 import route from './routes/mainroute.js'
@@ -12,7 +12,7 @@ const port = process.env.PORT
 
 
 // ---------------------------------------------------------
-app.use(morgan('combined'))
+// app.use(morgan('combined'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cor({origin: '*'}))
