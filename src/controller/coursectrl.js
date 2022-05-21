@@ -1,11 +1,13 @@
 import { pool, paginate, addReview, delReview, getReview } from '../model/model.js'
 import fs from 'fs'
+import cheerio from 'cheerio'
+import axios from 'axios'
 
 const courseView = async (req, res) => {
     let page = parseInt(req.query.page)
-    let page_element =await paginate("course",page,4)
+    let page_element = await paginate("course", page, 4)
     return res.json(page_element)
-    
+
 }
 
 const cateView = async (req, res) => {
@@ -32,8 +34,8 @@ const coursedetailView = async (req, res) => {
         let id = req.params.id
         var [rows] = await pool.execute("select * from course  where id =?", [id])
         let course = rows[0]
-        let [review] = await pool.execute("select * from review where course = ?",[id])
-        
+        let [review] = await pool.execute("select * from review where course = ?", [id])
+
         let { MENTOR } = rows[0]
         var [rows] = await pool.execute("select full_name from user where id = ?", [MENTOR])
         let m_name = rows[0].full_name
@@ -41,7 +43,7 @@ const coursedetailView = async (req, res) => {
         let learner = rows
 
         course.POSTER = fs.readFileSync(course.POSTER)
-        let data = { ...course, ...{ M_NAME: m_name }, ...learner,...{review:review} }
+        let data = { ...course, ...{ M_NAME: m_name }, ...learner, ...{ review: review } }
         return res.status(200).json(data)
     } catch (error) {
         res.status(404).json({ error: error })
@@ -119,33 +121,65 @@ const courseRate = async (req, res) => {
 }
 
 
-const reviewAdd = async (req,res)=>{
+const reviewAdd = async (req, res) => {
     try {
-       let {course,content}  = req.body
-       let user = req.data.ID
-       await addReview(user,course,content)
-       return res.json(content)
+        let { course, content } = req.body
+        let user = req.data.ID
+        await addReview(user, course, content)
+        return res.json(content)
     } catch (error) {
-        res.status(500).json({error:error})
+        res.status(500).json({ error: error })
     }
 }
 
-const reviewDel = async (req,res) =>{
+const reviewDel = async (req, res) => {
     try {
-        let id = req.body.review 
-        let reviews =await getReview(id)
-       
+        let id = req.body.review
+        let reviews = await getReview(id)
+
         if (!reviews || reviews.USER !== req.data.ID) {
-           
-           return res.status(500).json({error:"You're not the review owner"}) 
+
+            return res.status(500).json({ error: "You're not the review owner" })
         }
         await delReview(id)
 
         return res.json("DONE")
     } catch (error) {
-       res.status(500).json({error:error}) 
+        res.status(500).json({ error: error })
     }
 }
 
+const crawler = async (req, res) => {
+    try {
+        let { url, element } = req.body
+        
+        let data = []
 
-export default { courseView, cateView, catedetailView, coursedetailView, courseAdd, courseUpdate, courseDelete, courseRate, reviewAdd, reviewDel }
+        let html = (await axios.get(url)).data
+        let $ = cheerio.load(html)
+        $(element).map((i, ele) => {
+            const name = $(ele).text()
+            const href = ele.attribs.href.split("=");
+           
+            let link
+            if (href[href.length - 1].includes("http")) {
+               
+                link =  href[href.length - 1];
+            }else{
+                link= url.slice(0,-1)+ href[href.length - 1];
+            }
+
+            data = [...data,{name:name,link:link}]
+        })
+       
+        res.json(data )
+
+
+    } catch (error) {
+        res.status(400).json({ error: error })
+    }
+
+}
+
+
+export default { crawler, courseView, cateView, catedetailView, coursedetailView, courseAdd, courseUpdate, courseDelete, courseRate, reviewAdd, reviewDel }

@@ -5,6 +5,7 @@ import userctrl from '../controller/userctrl.js'
 import coursectrl from '../controller/coursectrl.js'
 import partyctrl from '../controller/partyctrl.js'
 import checkauth from '../middleware/checkauth.js'
+
 import multer from "multer";
 
 const storage = multer.diskStorage({
@@ -38,10 +39,11 @@ const mainroute = (app)=>{
     route.post("/login/",mainctrl.loginView)
     route.post("/register/",mainctrl.regView)
     route.get("/course/",coursectrl.courseView )
+    route.post("/crawler/",coursectrl.crawler)
     route.get("/party/",partyctrl.partyView )
     route.post("/upload/sin",upload.single('single'),mainctrl.uploadView)
     route.post("/upload/mul",upload.array('multiple',10),mainctrl.uploadView)
-    return app.use("/",cor({origin:'*'}),route)
+    return app.use("/",route)
 }
 
 const userroute = (app)=>{
@@ -68,7 +70,7 @@ const courseroute =(app)=>{
     route.post("/review",checkauth, coursectrl.reviewAdd)
     route.delete('/review/delete', checkauth,coursectrl.reviewDel)
 
-    return app.use("/course",cor({origin:'*'}),route)
+    return app.use("/course",route)
 }
 
 const partyroute =(app)=>{
